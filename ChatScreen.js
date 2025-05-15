@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { db } from './firebaseConfig';
 import { ref, onValue, push, remove } from 'firebase/database';
+import * as Animatable from 'react-native-animatable';
 
 const ChatScreen = () => {
   const [messages, setMessages] = useState([]);
@@ -22,30 +23,28 @@ const ChatScreen = () => {
   const flatListRef = useRef();
   const appState = useRef(AppState.currentState);
 
-  const scrollToEnd = (animated = true) => {
+  const scrollToEnd = () => {
     setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated });
-    }, 50);
+      flatListRef.current?.scrollToEnd({ animated: false }); // no scroll animation
+    }, 20);
   };
 
-  // Load messages and scroll directly to bottom
   useEffect(() => {
     const messagesRef = ref(db, 'messages/');
     const unsubscribe = onValue(messagesRef, snapshot => {
       const data = snapshot.val() || {};
       const loadedMessages = Object.values(data);
       setMessages(loadedMessages);
-      scrollToEnd(false); // ⬅️ no animation
+      scrollToEnd();
     });
 
     return () => unsubscribe();
   }, []);
 
-  // Detect app close and clear chat
   useEffect(() => {
     const handleAppStateChange = (nextAppState) => {
       if (appState.current === 'active' && nextAppState.match(/inactive|background/)) {
-        remove(ref(db, 'messages/')); // ⬅️ delete all messages
+        remove(ref(db, 'messages/'));
       }
       appState.current = nextAppState;
     };
@@ -56,7 +55,7 @@ const ChatScreen = () => {
 
   const handleSend = () => {
     if (newMessage.trim()) {
-      const emojiRegex = /^[\p{Emoji}\s]+$/u;
+      const emojiRegex = /^[^a-zA-Z0-9]*$/;
       const isEmojiOnly = emojiRegex.test(newMessage.trim()) && newMessage.trim().length <= 10;
 
       const newMsg = {
@@ -73,21 +72,29 @@ const ChatScreen = () => {
 
   const renderItem = ({ item }) => {
     const isMe = item.sender === (Platform.OS === 'ios' ? 'ios' : 'android');
+    const bubbleStyle = isMe ? styles.myBubble : styles.otherBubble;
+    const textStyle = isMe ? styles.myText : styles.otherText;
 
     if (item.isEmojiOnly) {
       return (
-        <View style={[styles.emojiContainer, { alignSelf: isMe ? 'flex-end' : 'flex-start' }]}>
+        <Animatable.View animation="fadeInUp" duration={200} style={[
+          styles.emojiContainer,
+          { alignSelf: isMe ? 'flex-end' : 'flex-start' }
+        ]}>
           <Text style={styles.emojiOnly}>{item.text}</Text>
-        </View>
+        </Animatable.View>
       );
     }
 
     return (
-      <View style={[styles.messageContainer, { alignSelf: isMe ? 'flex-end' : 'flex-start' }]}>
-        <View style={styles.messageBubble}>
-          <Text style={styles.messageText}>{item.text}</Text>
+      <Animatable.View animation="fadeInUp" duration={200} style={[
+        styles.messageContainer,
+        { alignSelf: isMe ? 'flex-end' : 'flex-start' }
+      ]}>
+        <View style={bubbleStyle}>
+          <Text style={textStyle}>{item.text}</Text>
         </View>
-      </View>
+      </Animatable.View>
     );
   };
 
@@ -96,7 +103,7 @@ const ChatScreen = () => {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 20}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 100}
       >
         <FlatList
           ref={flatListRef}
@@ -104,7 +111,7 @@ const ChatScreen = () => {
           renderItem={renderItem}
           keyExtractor={(_, index) => index.toString()}
           contentContainerStyle={styles.flatList}
-          onContentSizeChange={() => scrollToEnd()}
+          onContentSizeChange={scrollToEnd}
         />
 
         <View style={styles.inputContainer}>
@@ -129,14 +136,22 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   flatList: { padding: 13, paddingBottom: 100 },
   messageContainer: { marginBottom: 10 },
-  messageBubble: {
+  myBubble: {
     backgroundColor: '#007AFF',
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 20,
     maxWidth: '80%',
   },
-  messageText: { color: '#fff', fontSize: 17 },
+  otherBubble: {
+    backgroundColor: '#E5E5EA',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    maxWidth: '80%',
+  },
+  myText: { color: '#fff', fontSize: 17 },
+  otherText: { color: '#000', fontSize: 17 },
   emojiContainer: { marginBottom: 10 },
   emojiOnly: { fontSize: 45 },
   inputContainer: {

@@ -1,29 +1,36 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 
 const ProfileScreen = () => {
-  // Replace with your actual details
-  const userDetails = {
-    name: 'Your Name',
-    age: 30,
-    location: 'Your City',
-    // Add more details as needed
-    weight: '70 kg',
-    height: '175 cm',
-    goal: 'Maintain fitness level',
-  };
+  const userDetails =
+    Platform.OS === 'ios'
+      ? {
+          name: 'Sai Charan',
+          age: 21,
+          location: 'Hyderabad',
+          weight: '64 kg',
+          height: '178 cm', // 5'10"
+          goal: 'Maintain fitness level',
+        }
+      : {
+          name: 'Rithika',
+          age: 18,
+          location: 'Hyderabad',
+          weight: '40 kg',
+          height: '155 cm', // 5'1"
+          goal: 'Weight gain',
+        };
 
   return (
     <View style={profileStyles.container}>
       <View style={profileStyles.detailCard}>
-        <Text style={profileStyles.title}>Details:</Text>
+        <Text style={profileStyles.title}>Profile Details</Text>
         <Text style={profileStyles.info}>Name: {userDetails.name}</Text>
         <Text style={profileStyles.info}>Age: {userDetails.age}</Text>
         <Text style={profileStyles.info}>Location: {userDetails.location}</Text>
         <Text style={profileStyles.info}>Weight: {userDetails.weight}</Text>
         <Text style={profileStyles.info}>Height: {userDetails.height}</Text>
         <Text style={profileStyles.info}>Goal: {userDetails.goal}</Text>
-        {/* Add more of your details here */}
       </View>
     </View>
   );
@@ -49,14 +56,14 @@ const profileStyles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#555',
+    color: '#333',
     marginBottom: 10,
   },
   info: {
     fontSize: 16,
-    color: '#777',
-    marginBottom: 5,
+    color: '#444',
+    marginBottom: 6,
   },
 });
 
-export default ProfileScreen; 
+export default ProfileScreen;
